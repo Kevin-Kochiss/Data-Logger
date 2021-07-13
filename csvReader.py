@@ -14,6 +14,7 @@ if my_file_path.exists():
             row_num += 1
             #print("Row {}: {}")
             print("Row {}: {}".format(row_num, row))
+            print('Test')
             # for col in row:
                 # move move col into approriate var
         #### write them to a sepreate csv label with with a batch number
