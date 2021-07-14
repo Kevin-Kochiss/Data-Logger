@@ -6,18 +6,18 @@ import time
 from datetime import datetime
 import os
 from pathlib import Path
-
+from config import ScriptVars
 
 # This module is responsible for scanning through the folder directory
 # and detecting new files, monitoring them until data capture is 
 # complete before passing them off to the email module
-MANIFEST = 'manifest.txt'
 
 def scan_files(root_dir):
     '''
     This function scans through the files of the root 
     '''
-    with open(MANIFEST, 'r') as manifest:
+    manifest_path = ScriptVars().MANIFEST_FILE
+    with open(manifest_path, 'r') as manifest:
         manifest_content = manifest.read()
 
     walk_dir(root_dir, manifest_content)
@@ -104,7 +104,8 @@ def email_data():
 
 def update_manifest(in_path):
     ''''''
-    with open(MANIFEST, 'a') as manifest_file:
+    manifest_path = ScriptVars().MANIFEST_FILE
+    with open(manifest_path, 'a') as manifest_file:
         can_delete = True
         manifest_entry = '{}\t{}\n'.format(
             datetime.now().strftime('%x'),in_path)
@@ -112,7 +113,8 @@ def update_manifest(in_path):
     clean_manifest()
 
 def clean_manifest():
-    with open(MANIFEST, 'r+') as manifest_file:
+    manifest_path = ScriptVars().MANIFEST_FILE
+    with open(manifest_path, 'r+') as manifest_file:
         entries = manifest_file.read()
         entries = entries.split('\n')
         entries = [entry for entry in entries if check_date(entry)]
@@ -142,3 +144,7 @@ def sampling_error(file_path):
         'Check to see if this file is the correct type'
     email_errors(error_msg)
 
+import sys
+print(sys.path)
+sys.path.append("d:\programs\anaconda\envs\dataloggerenv\lib\site-packages")
+print(sys.path)
