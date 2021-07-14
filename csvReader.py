@@ -1,58 +1,62 @@
-import csv
+from itertools import zip_longest
 import re
+from AsylumServer.manifest_manager.models import Manifest
+import csv
 import time
+from datetime import datetime
+import os
 from pathlib import Path
-## Main loop
-#Access the manifest log to see what file should be accessed, ie if a new file has been created
-my_file_path = Path(r'C:\Users\kevin\Documents\graphtec\GL100_240_840-APS\Data\2021-07-12\GL240_DEMO_01_2021-07-12_12-53-13.csv')
-if my_file_path.exists():
-    with my_file_path.open('r') as csvfile:
-        csvreader = csv.reader(csvfile)
-        #### read rows
-        #Frind row containign <Row 17> 'Data', split the list there, the trunk of that list will start with headers, row after that is units, row after that starts data
-        #fields = next(csvreader)
-        row_num = 0
-        for row in csvreader:
-            row_num += 1
-            #print("Row {}: {}")
-            print("Row {}: {}".format(row_num, row))
-            print('Test')
-            # for col in row:
-                # move move col into approriate var
-        #### write them to a sepreate csv label with with a batch number
 
 
 # This module is responsible for scanning through the folder directory
 # and detecting new files, monitoring them until data capture is 
 # complete before passing them off to the email module
+MANIFEST = 'manifest.txt'
 
 def scan_files(root_dir):
-    pass
+    '''
+    This function scans through the files of the root 
+    '''
+    with open(MANIFEST, 'r') as manifest:
+        manifest_content = manifest.read()
 
+    walk_dir(root_dir, manifest_content)
+
+def walk_dir(directory, manifest_content):
+    for filename in os.listdir(directory):
+        path = os.path.join(directory, filename)
+        if os.path.isfile(path):
+            if filename in manifest_content:
+                monitor_data(path)
+        elif os.path.isdir(path):
+            walk_dir(path, manifest_content)
+    
 def monitor_data(file_path):
-    #default & minimum sleep rate of 1 second, which is then adjusted after esatblishing the differnce in two points
-    #from the csv
-    sampling_rate   = -1
-    try:
-        with open(file_path, 'r') as csv_file:
-            csv_reader = csv.reader(csv_file)
-            for row in csv_reader:
-                if row[0] == 'Sampling':
-                    sampling_rate = re.sub('[^0-9]', '', row[1])
-        if sampling_rate == -1:
-            sampling_error(file_path)
-            return
-
-    except(IOError, EOFError) as e:
-        print("Testing multiple exceptions. {}".format(e.args[-1]))
-        email_errors('FILE_READ')
-
+    '''
+    Reads the file located at the provided path, verifies the format is correct
+    and monitors the run, emailing the csv once completed
+    '''
+    #TODO:check to ensure file path is csv
+    time_1              = None
+    time_2              = None
+    scanning_rate       = 60
+    passes_unchanged    = 0
+    data_points         = 0
     while True:
-        passes_unchanged = 0
-        data_points     = 0
         try:
             with open(file_path, 'r') as csv_file:
                 csv_reader = csv.reader(csv_file)
+                # Dynamically adjusts the scanning rate
+                if time_1 == None and data_points > 3:
+                    for row in csv_reader:
+                        if row[0].strip().isdigit():
+                            if time_1 == None:
+                                time_1 = row[1]
+                                continue
+                            if time_2 == None:
+                                time_2 = row[1]
+                                break
+                            
                 for row in csv_reader:
                     if row[0] == 'Total data points':
                         new_data_points = int(row[1])
@@ -61,22 +65,73 @@ def monitor_data(file_path):
                         else:
                             data_points = new_data_points
                         break
+
         except(IOError, EOFError) as e:
             print("Testing multiple exceptions. {}".format(e.args[-1]))
             email_errors('FILE_READ')
 
-        time.sleep(sampling_rate * 10)
-        #if no change in data_points after two passes, break
+        if time_1 != None and time_2 != None:
+            result = subtract_times(time_1[-8:], time_2[-8:])
+            if result > 60:
+                scanning_rate = result
+
+        time.sleep(scanning_rate)
+        #if no change in data_points after two passes, the log is complete break
         if passes_unchanged == 2:
             break
 
     email_data()
+    update_manifest(file_path)
+
+def subtract_times(time_1, time_2):
+    '''substracts two times in HH:MM:SS and retruning the difference in seconds'''
+    from itertools import zip_longest 
+    time_1 = time_1.split(':')
+    time_2 = time_2.split(':')
+
+    delta_seconds = 0
+    index = 1
+    for t1,t2 in zip_longest(time_1, time_2, fillvalue=0):
+        t1 * 3600 / index
+        t2 * 3600 / index
+        delta_seconds += abs(t1-t2)
+        index += 1
+    return delta_seconds
+
 
 def email_data():
     pass
 
+def update_manifest(in_path):
+    ''''''
+    with open(MANIFEST, 'a') as manifest_file:
+        can_delete = True
+        manifest_entry = '{}\t{}\n'.format(
+            datetime.now().strftime('%x'),in_path)
+        manifest_file.write(in_path + '\n')
+    clean_manifest()
+
+def clean_manifest():
+    with open(MANIFEST, 'r+') as manifest_file:
+        entries = manifest_file.read()
+        entries = entries.split('\n')
+        entries = [entry for entry in entries if check_date(entry)]
+
+        manifest_file.seek(0)
+        manifest_file.write('\n'.join(entries))
+        manifest_file.truncate()
+
+def check_date(entry):
+    entry = entry.split('\t')
+    dif = datetime.strptime(entry[0], '%x') - datetime.now()
+    if dif.days > 7:
+        os.remove(entry[1])
+        return False
+    else:
+        return True
+
 def email_errors(error_string):
-    if(error_string == 'SAMPLING_RATE'):
+    if(error_string == 'scanning_rate'):
         error_message = 'An error was detected when attempting to read a file'
 
 def sampling_error(file_path):
@@ -86,3 +141,4 @@ def sampling_error(file_path):
         '\"Sampling\" was not found as a cell item.'\
         'Check to see if this file is the correct type'
     email_errors(error_msg)
+

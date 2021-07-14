@@ -3,16 +3,19 @@ import os
 import smtplib
 import csv
 from email.message import EmailMessage
+#from dotenv import load_dotenv
 
-EMAIL_ADDRESS = ''
-EMAIL_PASS = ''
+# load_dotenv()
+# print(os.environ['EMAIL_ADDRESS'])
+EMAIL_ADDRESS   = ''
+EMAIL_PASS      = ''
 
-def send_batch_email(subject, body):
+def send_batch_email(subject, body, attachments=None):
     recipients = []
     with open('recipients.csv', 'r') as csv_file:
         csv_reader = csv.reader(csv_file)
         for row in csv_reader:
-            if row[0].find('@'):
+            if '@' in row[0]:
                 recipients.append(row[0])
                 
     msg = EmailMessage()
@@ -20,9 +23,13 @@ def send_batch_email(subject, body):
     msg['Body'] = body
     # msg.set_content(body)
     msg['From'] = EMAIL_ADDRESS 
-    msg['To']   = recipients
+    msg['To']   = ', '.join(recipients)
 
-    #Open csv file as 'rb'
+    #Open csv file as 'rb' for attachments
+    if attachments != None:
+        for attachment in attachments:
+            with open(attachment, 'rb'):
+                pass
 
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
