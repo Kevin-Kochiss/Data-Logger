@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 import os
 from pathlib import Path
-from config import ScriptVars
+from configuration import ScriptVars
 
 # This module is responsible for scanning through the folder directory
 # and detecting new files, monitoring them until data capture is 
@@ -14,8 +14,11 @@ from config import ScriptVars
 
 def scan_files(root_dir):
     '''
-    This function scans through the files of the root 
+    This function scans through the files of the root directory.
+    If the root_dir does not exist it exits, allowing for the user to update it
     '''
+    if not Path(root_dir).exists:
+        return
     manifest_path = ScriptVars().MANIFEST_FILE
     with open(manifest_path, 'r') as manifest:
         manifest_content = manifest.read()
@@ -144,7 +147,3 @@ def sampling_error(file_path):
         'Check to see if this file is the correct type'
     email_errors(error_msg)
 
-import sys
-print(sys.path)
-sys.path.append("d:\programs\anaconda\envs\dataloggerenv\lib\site-packages")
-print(sys.path)

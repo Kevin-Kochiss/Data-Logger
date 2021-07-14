@@ -3,7 +3,7 @@ import os
 import smtplib
 import csv
 from email.message import EmailMessage
-from config import ScriptVars
+from configuration import ScriptVars
 
 def send_batch_email(subject, body, attachments=None):
     recipients = []
