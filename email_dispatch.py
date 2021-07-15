@@ -26,8 +26,8 @@ def send_batch_email(subject=None, body=None, attachments=None):
         msg['Subject'] = subject
     elif isinstance(attachments, list):
         msg['Subject'] = PurePath(attachments[0]).name
-    elif isinstance(attachments, WindowsPath):
-        msg['Subject'] = PurePath(attachments).name
+    elif isinstance(attachments, WindowsPath) or isinstance(attachments, str):
+        msg['Subject'] = PurePath(attachments).name.split('.')[0]
     else:
         msg['Subject'] = 'Message from Line 7'
     if body != None:

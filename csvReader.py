@@ -44,12 +44,13 @@ def monitor_data(file_path):
     ext = os.path.splitext(file_path)[-1].lower()
     if ext != '.csv':
         return
-    manifest_path = ScriptVars().MANIFEST_FILE
+    config = ScriptVars()
+    manifest_path = config.MANIFEST_FILE
     manifest_content = get_or_create_manifest(manifest_path)
     if file_path in manifest_content:
         return
 
-    if ScriptVars().can_debug:
+    if config.can_debug:
             print('Valid file found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
@@ -86,7 +87,7 @@ def monitor_data(file_path):
 
         if time_1 != None and time_2 != None:
             result = subtract_times(time_1[-8:], time_2[-8:])
-            if result > 60:
+            if result > config.config['MIN_SWEEP']:
                 scanning_rate = result
 
         time.sleep(scanning_rate)
@@ -94,7 +95,7 @@ def monitor_data(file_path):
         if passes_unchanged == 2:
             break
 
-    if send_batch_email():
+    if send_batch_email(attachments=file_path):
         pass #Generate error report txt
     update_manifest(file_path)
 
@@ -135,7 +136,6 @@ def clean_manifest():
 
 def check_date(entry):
     entry = entry.split('\t')
-    print(entry)
     dif = datetime.strptime(entry[0], '%x') - datetime.now()
     if dif.days > 7:
         file_path = Path(entry[1])
