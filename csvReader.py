@@ -24,6 +24,8 @@ def scan_files(root_dir):
     walk_dir(root_dir, manifest_content)
 
 def walk_dir(directory, manifest_content):
+    if not Path(directory).exists():
+        return
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
