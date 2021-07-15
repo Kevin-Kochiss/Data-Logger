@@ -118,7 +118,7 @@ def update_manifest(in_path):
         can_delete = True
         manifest_entry = '{}\t{}\n'.format(
             datetime.now().strftime('%x'),in_path)
-        manifest_file.write(in_path + '\n')
+        manifest_file.write(manifest_entry)
     clean_manifest()
 
 def clean_manifest():
