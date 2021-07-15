@@ -34,7 +34,6 @@ def walk_dir(directory, manifest_content):
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
-            print('path is file: {}'.format(path))
             if not filename in manifest_content:
                 monitor_data(path)
         elif os.path.isdir(path):
@@ -45,9 +44,11 @@ def monitor_data(file_path):
     Reads the file located at the provided path, verifies the format is correct
     and monitors the run, emailing the csv once completed
     '''
-    #TODO:check to ensure file path is csv
+    ext = os.path.splitext(file_path)[-1].lower()
+    if ext != '.csv':
+        return
     if ScriptVars().can_debug:
-            print('File found at:\n{}'.format(file_path))
+            print('Valid file found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
     scanning_rate       = 15
