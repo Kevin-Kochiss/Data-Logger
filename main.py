@@ -3,8 +3,9 @@ import time
 from configuration import ScriptVars
 
 while True:
-    config_vars = ScriptVars()
-    root_dir = config_vars.config['ROOT_DIR']
-    scan_rate = config_vars.config['SCAN_RATE']
-    scan_files(root_dir)
+    config = ScriptVars()
+    root_dir = config.config['ROOT_DIR']
+    scan_rate = config.config['SCAN_RATE']
+    if config.can_run():
+        scan_files(root_dir)
     time.sleep(scan_rate)
