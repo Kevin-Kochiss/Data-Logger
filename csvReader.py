@@ -21,12 +21,10 @@ def scan_files(root_dir):
         if config.can_debug:
             print('Provided ROOT_DIR does not exist:\n{}'.format(root_dir))
         return
-    manifest_path = config.MANIFEST_FILE
-    manifest_content = get_or_create_manifest(manifest_path)
+    
+    walk_dir(root_dir)
 
-    walk_dir(root_dir, manifest_content)
-
-def walk_dir(directory, manifest_content):
+def walk_dir(directory):
     if not Path(directory).exists():
         if ScriptVars().can_debug:
             print('Provided directory does not exist:\n{}'.format(directory))
@@ -34,10 +32,9 @@ def walk_dir(directory, manifest_content):
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
-            if not filename in manifest_content:
-                monitor_data(path)
+            monitor_data(path)
         elif os.path.isdir(path):
-            walk_dir(path, manifest_content)
+            walk_dir(path)
     
 def monitor_data(file_path):
     '''
@@ -47,11 +44,16 @@ def monitor_data(file_path):
     ext = os.path.splitext(file_path)[-1].lower()
     if ext != '.csv':
         return
+    manifest_path = ScriptVars().MANIFEST_FILE
+    manifest_content = get_or_create_manifest(manifest_path)
+    if file_path in manifest_content:
+        return
+
     if ScriptVars().can_debug:
             print('Valid file found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
-    scanning_rate       = 15
+    scanning_rate       = 2
     passes_unchanged    = 0
     data_points         = 0
     while True:
@@ -97,7 +99,7 @@ def monitor_data(file_path):
     update_manifest(file_path)
 
 def subtract_times(time_1, time_2):
-    '''substracts two times in HH:MM:SS and retruning the difference in seconds'''
+    '''Substracts two times in HH:MM:SS and retruning the difference in seconds'''
     from itertools import zip_longest 
     time_1 = time_1.split(':')
     time_2 = time_2.split(':')
@@ -105,17 +107,16 @@ def subtract_times(time_1, time_2):
     delta_seconds = 0
     index = 1
     for t1,t2 in zip_longest(time_1, time_2, fillvalue=0):
-        t1 * 3600 / index
-        t2 * 3600 / index
+        t1 = int(t1) * 3600 / index
+        t2 = int(t2) * 3600 / index
         delta_seconds += abs(t1-t2)
         index += 1
     return delta_seconds
 
 def update_manifest(in_path):
-    ''''''
+    '''This function updates the manifest file with a new entry'''
     manifest_path = ScriptVars().MANIFEST_FILE
     with open(manifest_path, 'a') as manifest_file:
-        can_delete = True
         manifest_entry = '{}\t{}\n'.format(
             datetime.now().strftime('%x'),in_path)
         manifest_file.write(manifest_entry)
@@ -125,7 +126,7 @@ def clean_manifest():
     manifest_path = ScriptVars().MANIFEST_FILE
     with open(manifest_path, 'r+') as manifest_file:
         entries = manifest_file.read()
-        entries = entries.split('\n')
+        entries = entries.splitlines()
         entries = [entry for entry in entries if check_date(entry)]
 
         manifest_file.seek(0)
@@ -134,9 +135,12 @@ def clean_manifest():
 
 def check_date(entry):
     entry = entry.split('\t')
+    print(entry)
     dif = datetime.strptime(entry[0], '%x') - datetime.now()
     if dif.days > 7:
-        os.remove(entry[1])
+        file_path = Path(entry[1])
+        if file_path.exists():
+            os.remove(entry[1])
         return False
     else:
         return True
