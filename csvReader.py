@@ -54,7 +54,7 @@ def monitor_data(file_path):
             print('Valid file found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
-    scanning_rate       = 2
+    scanning_rate       = config.config['MIN_SWEEP']
     passes_unchanged    = 0
     data_points         = 0
     while True:
@@ -86,10 +86,9 @@ def monitor_data(file_path):
             #email_errors('FILE_READ')
 
         if time_1 != None and time_2 != None:
-            result = subtract_times(time_1[-8:], time_2[-8:])
-            if result > config.config['MIN_SWEEP']:
+            result = subtract_times(time_1.split(' ')[-1], time_2.split(' ')[-1])
+            if result > scanning_rate:
                 scanning_rate = result
-
         time.sleep(scanning_rate)
         #if no change in data_points after two passes, the log is complete break
         if passes_unchanged == 2:
@@ -106,11 +105,10 @@ def subtract_times(time_1, time_2):
     time_2 = time_2.split(':')
 
     delta_seconds = 0
-    index = 1
-    for t1,t2 in zip_longest(time_1, time_2, fillvalue=0):
-        t1 = int(t1) * 3600 / index
-        t2 = int(t2) * 3600 / index
-        delta_seconds += abs(t1-t2)
+    index = 0
+    for t1,t2 in zip_longest(time_1, time_2, fillvalue=0): 
+        dif = abs(int(t1)-int(t2))
+        delta_seconds += dif * 3600 / (60**index)
         index += 1
     return delta_seconds
 
@@ -128,19 +126,28 @@ def clean_manifest():
     with open(manifest_path, 'r+') as manifest_file:
         entries = manifest_file.read()
         entries = entries.splitlines()
-        entries = [entry for entry in entries if check_date(entry)]
-
         manifest_file.seek(0)
-        manifest_file.write('\n'.join(entries))
+        print(entries)
+        entries = [entry for entry in entries if check_date(entry)]
+        print('Joined:\n {}'.format('\n'.join(entries)))
+        for entry in entries:
+            manifest_file.write('{}\n'.format(entry))
+        #manifest_file.write('\n'.join(entries))
         manifest_file.truncate()
 
 def check_date(entry):
     entry = entry.split('\t')
     dif = datetime.strptime(entry[0], '%x') - datetime.now()
     if dif.days > 7:
-        file_path = Path(entry[1])
-        if file_path.exists():
-            os.remove(entry[1])
+        base_path = Path(entry[1])
+        file_paths = [base_path]
+        ccr_path = os.path.splitext(base_path)[0] + '.ccr'
+        file_paths.append(Path(ccr_path))
+        png_path = os.path.splitext(base_path)[0] + '.png'
+        file_paths.append(Path(png_path))
+        for fp in file_paths:
+            if fp.exists():
+                os.remove(fp)
         return False
     else:
         return True
