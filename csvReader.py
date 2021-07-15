@@ -28,11 +28,14 @@ def scan_files(root_dir):
 
 def walk_dir(directory, manifest_content):
     if not Path(directory).exists():
+        if ScriptVars().can_debug:
+            print('Provided directory does not exist:\n{}'.format(directory))
         return
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
-            if filename in manifest_content:
+            print('path is file: {}'.format(path))
+            if not filename in manifest_content:
                 monitor_data(path)
         elif os.path.isdir(path):
             walk_dir(path, manifest_content)
@@ -43,6 +46,8 @@ def monitor_data(file_path):
     and monitors the run, emailing the csv once completed
     '''
     #TODO:check to ensure file path is csv
+    if ScriptVars().can_debug:
+            print('File found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
     scanning_rate       = 15
