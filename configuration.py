@@ -51,28 +51,11 @@ class ScriptVars():
     MANIFEST_FILE   = Path.joinpath(CONFIG_DIR, 'manifest.txt')
     SETTINGS_FILE   = Path.joinpath(CONFIG_DIR, 'settings.csv')
     RECIPIENTS      = Path.joinpath(CONFIG_DIR, 'recipients.csv')
-    EMAIL_ADDRESS   = ''
-    EMAIL_PASS      = ''
+    EMAIL_ADDRESS   = 'lubrizoldatalogger@gmail.com'
+    EMAIL_PASS      = 'rccfnclgvmcjgrdv'
     
     
 def clean_int(val):
     return int(re.sub('[^0-9]', '', val))
     
 
-
-my_vars = ScriptVars()
-
-print(my_vars.config['SCAN_RATE'])
-
-# r_list= [1,2,3]
-# r_dict= {'a':30, 'b':'two'}
-# print(isinstance(r_dict['a'], int))
-# new_dict = {key:row for key, row in zip_longest(r_dict, r_list)}
-# print(new_dict)
-
-# with open('settings.csv', 'r') as f:
-#     csv_reader = csv.reader(f)
-#     new_dict = {key:row[1] for key, row in zip_longest(my_vars.config, csv_reader)}
-#     print(new_dict)
-#     print(isinstance(new_dict['SCAN_RATE'], str))
-#     print(clean_int(new_dict['SCAN_RATE']))

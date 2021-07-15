@@ -1,3 +1,5 @@
 .env
 *.vscode
 config
+configuration.py
+readme.txt

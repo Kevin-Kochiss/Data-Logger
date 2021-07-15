@@ -1,12 +1,11 @@
 from itertools import zip_longest
-import re
-from AsylumServer.manifest_manager.models import Manifest
 import csv
 import time
 from datetime import datetime
 import os
 from pathlib import Path
 from configuration import ScriptVars
+from email_dispatch import send_batch_email
 
 # This module is responsible for scanning through the folder directory
 # and detecting new files, monitoring them until data capture is 
@@ -83,7 +82,7 @@ def monitor_data(file_path):
         if passes_unchanged == 2:
             break
 
-    email_data()
+    send_batch_email()
     update_manifest(file_path)
 
 def subtract_times(time_1, time_2):
@@ -100,10 +99,6 @@ def subtract_times(time_1, time_2):
         delta_seconds += abs(t1-t2)
         index += 1
     return delta_seconds
-
-
-def email_data():
-    pass
 
 def update_manifest(in_path):
     ''''''
@@ -134,6 +129,9 @@ def check_date(entry):
         return False
     else:
         return True
+
+def email_data():
+    pass
 
 def email_errors(error_string):
     if(error_string == 'scanning_rate'):
