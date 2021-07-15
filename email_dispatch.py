@@ -93,3 +93,14 @@ def get_or_create_recipients(path, default):
             csv_writer.writerow([default])
     return recipients
 
+def email_errors(error_string):
+    if(error_string == 'scanning_rate'):
+        error_message = 'An error was detected when attempting to read a file'
+
+def sampling_error(file_path):
+    error_msg = 'An error was detected when attempting to read:\n\n{}\n\n'\
+        .format(file_path)
+    error_msg += 'The sampling rate was not detected on the file.'\
+        '\"Sampling\" was not found as a cell item.'\
+        'Check to see if this file is the correct type'
+    email_errors(error_msg)

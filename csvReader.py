@@ -19,8 +19,7 @@ def scan_files(root_dir):
     if not Path(root_dir).exists:
         return
     manifest_path = ScriptVars().MANIFEST_FILE
-    with open(manifest_path, 'r') as manifest:
-        manifest_content = manifest.read()
+    manifest_content = get_or_create_manifest(manifest_path)
 
     walk_dir(root_dir, manifest_content)
 
@@ -70,7 +69,7 @@ def monitor_data(file_path):
 
         except(IOError, EOFError) as e:
             print("Testing multiple exceptions. {}".format(e.args[-1]))
-            email_errors('FILE_READ')
+            #email_errors('FILE_READ')
 
         if time_1 != None and time_2 != None:
             result = subtract_times(time_1[-8:], time_2[-8:])
@@ -131,16 +130,12 @@ def check_date(entry):
     else:
         return True
 
-
-def email_errors(error_string):
-    if(error_string == 'scanning_rate'):
-        error_message = 'An error was detected when attempting to read a file'
-
-def sampling_error(file_path):
-    error_msg = 'An error was detected when attempting to read:\n\n{}\n\n'\
-        .format(file_path)
-    error_msg += 'The sampling rate was not detected on the file.'\
-        '\"Sampling\" was not found as a cell item.'\
-        'Check to see if this file is the correct type'
-    email_errors(error_msg)
-
+def get_or_create_manifest(path):
+    try:
+        with open(path, 'r') as manifest:
+            manifest_content = manifest.read()
+    except:
+        with open(path, 'w') as manifest:
+            manifest_content = ''
+            manifest.write(manifest_content)
+    return manifest_content
