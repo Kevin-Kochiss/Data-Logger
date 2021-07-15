@@ -16,9 +16,12 @@ def scan_files(root_dir):
     This function scans through the files of the root directory.
     If the root_dir does not exist it exits, allowing for the user to update it
     '''
+    config = ScriptVars()
     if not Path(root_dir).exists:
+        if config.can_debug:
+            print('Provided ROOT_DIR does not exist:\n{}'.format(root_dir))
         return
-    manifest_path = ScriptVars().MANIFEST_FILE
+    manifest_path = config.MANIFEST_FILE
     manifest_content = get_or_create_manifest(manifest_path)
 
     walk_dir(root_dir, manifest_content)
@@ -42,7 +45,7 @@ def monitor_data(file_path):
     #TODO:check to ensure file path is csv
     time_1              = None
     time_2              = None
-    scanning_rate       = 60
+    scanning_rate       = 15
     passes_unchanged    = 0
     data_points         = 0
     while True:
