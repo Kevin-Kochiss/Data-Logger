@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from email.mime.image import MIMEImage
+from pathlib import WindowsPath
 
 def send_batch_email(subject=None, body=None, attachments=None):
     config_vars = ScriptVars()
@@ -19,13 +20,13 @@ def send_batch_email(subject=None, body=None, attachments=None):
 
     if not recipients:
         return False
-    #msg = EmailMessage()
+    
     msg = MIMEMultipart()
     if subject != None:
         msg['Subject'] = subject
     elif isinstance(attachments, list):
         msg['Subject'] = PurePath(attachments[0]).name
-    elif isinstance(attachments, str):
+    elif isinstance(attachments, WindowsPath):
         msg['Subject'] = PurePath(attachments).name
     else:
         msg['Subject'] = 'Message from Line 7'
@@ -92,5 +93,3 @@ def get_or_create_recipients(path, default):
             csv_writer.writerow([default])
     return recipients
 
-varvar = ScriptVars().SETTINGS_FILE
-send_batch_email(attachments=varvar)

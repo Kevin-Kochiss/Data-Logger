@@ -82,7 +82,8 @@ def monitor_data(file_path):
         if passes_unchanged == 2:
             break
 
-    send_batch_email()
+    if send_batch_email():
+        pass #Generate error report txt
     update_manifest(file_path)
 
 def subtract_times(time_1, time_2):
