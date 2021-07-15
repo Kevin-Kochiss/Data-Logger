@@ -131,8 +131,6 @@ def check_date(entry):
     else:
         return True
 
-def email_data():
-    pass
 
 def email_errors(error_string):
     if(error_string == 'scanning_rate'):
