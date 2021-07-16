@@ -46,7 +46,8 @@ def monitor_data(file_path):
         return
     config = ScriptVars()
     manifest_path = config.MANIFEST_FILE
-    manifest_content = get_or_create_manifest(manifest_path)
+    manifest_content = config.get_or_create_manifest()
+    #manifest_content = get_or_create_manifest(manifest_path)
     if file_path in manifest_content:
         return
 
