@@ -1,8 +1,8 @@
 from csvReader import scan_files
 import time
-from configuration import ScriptVars
+from configuration import ScriptVars, initialize
 
-
+initialize()
 
 while True:
     config = ScriptVars()
