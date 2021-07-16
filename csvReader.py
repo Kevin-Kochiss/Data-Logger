@@ -128,9 +128,7 @@ def clean_manifest():
         entries = manifest_file.read()
         entries = entries.splitlines()
         manifest_file.seek(0)
-        print(entries)
         entries = [entry for entry in entries if check_date(entry)]
-        print('Joined:\n {}'.format('\n'.join(entries)))
         for entry in entries:
             manifest_file.write('{}\n'.format(entry))
         #manifest_file.write('\n'.join(entries))
