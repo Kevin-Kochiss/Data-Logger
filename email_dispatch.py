@@ -1,12 +1,8 @@
 import csv
-from os import write
-from pathlib import Path, PurePath
-import re
 import smtplib
-import csv
-from email.message import EmailMessage
-from configuration import ScriptVars
 import mimetypes
+from pathlib import Path, PurePath
+from configuration import ScriptVars
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -16,7 +12,7 @@ from pathlib import WindowsPath
 
 def send_batch_email(subject=None, body=None, attachments=None):
     config_vars = ScriptVars()
-    recipients = get_or_create_recipients(config_vars.RECIPIENTS, config_vars.EMAIL_ADDRESS)
+    recipients = config_vars.get_or_create_recipients()
 
     if not recipients:
         return False
