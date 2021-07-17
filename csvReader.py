@@ -14,7 +14,8 @@ from email_dispatch import send_batch_email
 def scan_files(root_dir):
     '''
     This function scans through the files of the root directory.
-    If the root_dir does not exist it exits, allowing for the user to update it
+    If the root_dir does not exist it exits, 
+    Allowing for the user to update it
     '''
     config = ScriptVars()
     if not Path(root_dir).exists:
@@ -42,16 +43,16 @@ def walk_dir(directory):
     
 def monitor_data(file_path):
     '''
-    Reads the file located at the provided path, verifies the format is correct
-    and monitors the run, emailing the csv once completed
+    Reads the file located at the provided path, verifies the format is 
+    correct and monitors the run, emailing the csv once completed
     '''
     ext = os.path.splitext(file_path)[-1].lower()
     if ext != '.csv':
         return
+    if not validate_format(file_path):
+        return
     config = ScriptVars()
-    manifest_path = config.MANIFEST_FILE
     manifest_content = config.get_or_create_manifest()
-    #manifest_content = get_or_create_manifest(manifest_path)
     if file_path in manifest_content:
         return
 
@@ -91,7 +92,8 @@ def monitor_data(file_path):
             #email_errors('FILE_READ')
 
         if time_1 != None and time_2 != None:
-            result = subtract_times(time_1.split(' ')[-1], time_2.split(' ')[-1])
+            result = subtract_times(
+                time_1.split(' ')[-1], time_2.split(' ')[-1])
             if result > scanning_rate:
                 scanning_rate = result
         time.sleep(scanning_rate)
@@ -99,12 +101,12 @@ def monitor_data(file_path):
         if passes_unchanged == 2:
             break
 
-    if send_batch_email(attachments=file_path):
+    if not send_batch_email(attachments=file_path):
         pass #Generate error report txt
     update_manifest(file_path)
 
 def subtract_times(time_1, time_2):
-    '''Substracts two times in HH:MM:SS and retruning the difference in seconds'''
+    '''Substracts two times in HH:MM:SS, retruns difference in seconds'''
     from itertools import zip_longest 
     time_1 = time_1.split(':')
     time_2 = time_2.split(':')
@@ -166,4 +168,15 @@ def check_date(entry, days_old=7):
     else:
         return True
 
-
+def validate_format(in_path):
+    try:
+        with open(in_path, 'r') as csv_file:
+            try:
+                csv_reader = csv.reader(csv_file)
+                for row in csv_reader:
+                    if row[0] == 'Model' and row[1] == 'GL240':
+                        return True
+            except:
+                return False
+    except:
+        return False
