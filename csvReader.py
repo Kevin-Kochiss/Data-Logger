@@ -18,7 +18,7 @@ def scan_files(root_dir):
     '''
     config = ScriptVars()
     if not Path(root_dir).exists:
-        if config.can_debug:
+        if config.can_debug():
             print('Provided ROOT_DIR does not exist:\n{}'.format(root_dir))
         return
     
@@ -26,7 +26,7 @@ def scan_files(root_dir):
 
 def walk_dir(directory):
     if not Path(directory).exists():
-        if ScriptVars().can_debug:
+        if ScriptVars().can_debug():
             print('Provided directory does not exist:\n{}'.format(directory))
         return
     for filename in os.listdir(directory):
@@ -51,7 +51,7 @@ def monitor_data(file_path):
     if file_path in manifest_content:
         return
 
-    if config.can_debug:
+    if config.can_debug():
             print('Valid file found at:\n{}'.format(file_path))
     time_1              = None
     time_2              = None
