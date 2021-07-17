@@ -101,9 +101,10 @@ def monitor_data(file_path):
         if passes_unchanged == 2:
             break
 
-    if not send_batch_email(attachments=file_path):
+    if send_batch_email(attachments=file_path):
+        update_manifest(file_path)
+    else:
         pass #Generate error report txt
-    update_manifest(file_path)
 
 def subtract_times(time_1, time_2):
     '''Substracts two times in HH:MM:SS, retruns difference in seconds'''
