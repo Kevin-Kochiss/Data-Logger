@@ -25,6 +25,10 @@ def scan_files(root_dir):
     walk_dir(root_dir)
 
 def walk_dir(directory):
+    '''
+    Recursive function to iterate through each child of the 'root_dir'
+    If a file is found it is processed by monitor_data
+    '''
     if not Path(directory).exists():
         if ScriptVars().can_debug():
             print('Provided directory does not exist:\n{}'.format(directory))
@@ -123,21 +127,32 @@ def update_manifest(in_path):
     clean_manifest()
 
 def clean_manifest():
-    manifest_path = ScriptVars().MANIFEST_FILE
+    '''
+    Removes entries from the manifest file that are older 
+    than 'DELETE_AFTER', and deletes related files from system
+    '''
+    config = ScriptVars()
+    manifest_path = config.MANIFEST_FILE
     with open(manifest_path, 'r+') as manifest_file:
         entries = manifest_file.read()
         entries = entries.splitlines()
         manifest_file.seek(0)
-        entries = [entry for entry in entries if check_date(entry)]
+        entries = [entry for entry in entries if check_date(
+            entry, days_old=config.config['DELETE_AFTER'])]
         for entry in entries:
             manifest_file.write('{}\n'.format(entry))
         #manifest_file.write('\n'.join(entries))
         manifest_file.truncate()
 
-def check_date(entry):
+def check_date(entry, days_old=7):
+    '''
+    Checks to see if a manifest entry date is days_old, 
+    If so it and its compainion files are delted
+    Returns True if date is within range, False if file is old
+    '''
     entry = entry.split('\t')
     dif = datetime.strptime(entry[0], '%x') - datetime.now()
-    if dif.days > 7:
+    if dif.days > days_old:
         base_path = Path(entry[1])
         file_paths = [base_path]
         ccr_path = os.path.splitext(base_path)[0] + '.ccr'
@@ -151,12 +166,4 @@ def check_date(entry):
     else:
         return True
 
-def get_or_create_manifest(path):
-    try:
-        with open(path, 'r') as manifest:
-            manifest_content = manifest.read()
-    except:
-        with open(path, 'w') as manifest:
-            manifest_content = ''
-            manifest.write(manifest_content)
-    return manifest_content
+
