@@ -113,11 +113,9 @@ def subtract_times(time_1, time_2):
     time_2 = time_2.split(':')
 
     delta_seconds = 0
-    index = 0
-    for t1,t2 in zip_longest(time_1, time_2, fillvalue=0): 
+    for i, (t1,t2) in enumerate(zip_longest(time_1, time_2, fillvalue=0)): 
         dif = abs(int(t1)-int(t2))
-        delta_seconds += dif * 3600 / (60**index)
-        index += 1
+        delta_seconds += dif * 3600 / (60**i)
     return delta_seconds
 
 def update_manifest(in_path):
