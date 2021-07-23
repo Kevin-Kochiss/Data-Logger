@@ -1,4 +1,5 @@
 import csv
+from os import write
 import smtplib
 import mimetypes
 from pathlib import Path, PurePath
@@ -11,8 +12,8 @@ from email.mime.image import MIMEImage
 from pathlib import WindowsPath
 
 def send_batch_email(subject=None, body=None, attachments=None):
-    config_vars = ScriptVars()
-    recipients = config_vars.get_or_create_recipients()
+    config = ScriptVars()
+    recipients = config.get_or_create_recipients()
 
     if not recipients:
         return False
@@ -31,7 +32,7 @@ def send_batch_email(subject=None, body=None, attachments=None):
     else:
         body = 'Message sent from Data logger on Line 7'
         msg.attach(MIMEText(body))
-    msg['From'] = config_vars.EMAIL_ADDRESS 
+    msg['From'] = config.get_email_address()
     msg['To']   = ', '.join(recipients)
 
     #process attachments if present
@@ -45,12 +46,18 @@ def send_batch_email(subject=None, body=None, attachments=None):
             att = prepare_attachment(attachments)
             if att != None:
                 msg.attach(att)
-
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(config_vars.EMAIL_ADDRESS, config_vars.EMAIL_PASS)
-        smtp.send_message(msg)
-        smtp.close()
-    return True
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(config.get_email_address(), config.get_email_pass())
+            smtp.send_message(msg)
+            smtp.close()
+        clear_error(config.CONFIG_DIR)
+        return True
+    except:
+        if config.can_debug():
+            print('Email send failed')  #COuld not connected to the email server, make sure connected to interet
+        write_error(config.CONFIG_DIR)
+        return False
 
 def prepare_attachment(att):
     if not Path(att).is_file:
@@ -100,3 +107,18 @@ def sampling_error(file_path):
         '\"Sampling\" was not found as a cell item.'\
         'Check to see if this file is the correct type'
     email_errors(error_msg)
+
+def write_error(config_dir):
+    fp = Path.joinpath(config_dir, 'Email_Error.txt')
+    if Path(fp).exists():
+        return
+    try:
+        with open(fp, 'w') as f:
+            f.write('Email error, failed to connect to server.'
+            '\nCheck Internet conection')
+    except:
+        pass
+
+def clear_error(config_dir):
+    fp = Path.joinpath(config_dir, 'Email_Error.txt')
+    Path(fp).unlink(True)
