@@ -115,7 +115,8 @@ def write_error(config_dir):
     try:
         with open(fp, 'w') as f:
             f.write('Email error, failed to connect to server.'
-            '\nCheck Internet conection')
+            '\nCheck Internet conection.'
+            '\nEnsure that the SENDER_EMAIL crednetials are valid.')
     except:
         pass
 

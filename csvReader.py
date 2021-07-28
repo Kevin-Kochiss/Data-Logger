@@ -153,16 +153,26 @@ def check_date(entry, days_old=7):
     '''
     entry = entry.split('\t')
     dif = datetime.strptime(entry[0], '%x') - datetime.now()
-    if dif.days > days_old:
+    if dif.days >= days_old:
         base_path = Path(entry[1])
         file_paths = [base_path]
         ccr_path = os.path.splitext(base_path)[0] + '.ccr'
         file_paths.append(Path(ccr_path))
         png_path = os.path.splitext(base_path)[0] + '.png'
         file_paths.append(Path(png_path))
+        parent_dir = base_path.parent.absolute()
         for fp in file_paths:
             if fp.exists():
                 os.remove(fp)
+        #if parent dir is empty delete dir
+        if len(os.listdir(parent_dir)) == 0:
+            try:
+                parent_dir.rmdir()
+            except OSError as e:
+                config = ScriptVars()
+                if config.can_debug():
+                    print("Error: %s : %s" % (parent_dir, e.strerror))
+                pass
         return False
     else:
         return True
