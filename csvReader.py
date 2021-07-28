@@ -164,7 +164,6 @@ def check_date(entry, days_old=7):
         for fp in file_paths:
             if fp.exists():
                 os.remove(fp)
-        #if parent dir is empty delete dir
         if len(os.listdir(parent_dir)) == 0:
             try:
                 parent_dir.rmdir()
@@ -172,7 +171,7 @@ def check_date(entry, days_old=7):
                 config = ScriptVars()
                 if config.can_debug():
                     print("Error: %s : %s" % (parent_dir, e.strerror))
-                pass
+                
         return False
     else:
         return True
