@@ -1,9 +1,9 @@
-from csvReader import scan_files
+from csvReader import scan_files, clean_manifest
 import time
 from configuration import ScriptVars, initialize
 
 initialize()
-
+clean_manifest()
 while True:
     config      = ScriptVars()
     root_dir    = config.config['ROOT_DIR']

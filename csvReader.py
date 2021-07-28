@@ -103,8 +103,7 @@ def monitor_data(file_path):
 
     if send_batch_email(attachments=file_path):
         update_manifest(file_path)
-    else:
-        pass #Generate error report txt
+   
 
 def subtract_times(time_1, time_2):
     '''Substracts two times in HH:MM:SS, retruns difference in seconds'''
@@ -134,16 +133,19 @@ def clean_manifest():
     '''
     config = ScriptVars()
     manifest_path = config.MANIFEST_FILE
-    with open(manifest_path, 'r+') as manifest_file:
-        entries = manifest_file.read()
-        entries = entries.splitlines()
-        manifest_file.seek(0)
-        entries = [entry for entry in entries if check_date(
-            entry, days_old=config.config['DELETE_AFTER'])]
-        for entry in entries:
-            manifest_file.write('{}\n'.format(entry))
-        #manifest_file.write('\n'.join(entries))
-        manifest_file.truncate()
+    try:
+        with open(manifest_path, 'r+') as manifest_file:
+            entries = manifest_file.read()
+            entries = entries.splitlines()
+            manifest_file.seek(0)
+            entries = [entry for entry in entries if check_date(
+                entry, days_old=config.config['DELETE_AFTER'])]
+            for entry in entries:
+                manifest_file.write('{}\n'.format(entry))
+            manifest_file.truncate()
+    except OSError as e:
+        if config.can_debug():
+            print("Error: %s : %s" % (manifest_path, e.strerror))
 
 def check_date(entry, days_old=7):
     '''
@@ -151,9 +153,12 @@ def check_date(entry, days_old=7):
     If so it and its compainion files are delted
     Returns True if date is within range, False if file is old
     '''
+    print(entry) #--------
     entry = entry.split('\t')
-    dif = datetime.strptime(entry[0], '%x') - datetime.now()
+    dif =  datetime.now() - datetime.strptime(entry[0], '%x')
+    print(dif.days)
     if dif.days >= days_old:
+        print('> than')
         base_path = Path(entry[1])
         file_paths = [base_path]
         ccr_path = os.path.splitext(base_path)[0] + '.ccr'
