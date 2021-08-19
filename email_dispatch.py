@@ -12,6 +12,13 @@ from email.mime.image import MIMEImage
 from pathlib import WindowsPath
 
 def send_batch_email(subject=None, body=None, attachments=None):
+    '''
+    Sends a batch email to the recipients listed in 'recipients.csv'
+    @param  subject Sets the provided string as the subject line
+    @param  body    Sets the body of the email with the provided string
+    @param  attachments Attaches the files from the provided list of file paths
+    @return Returns True if the email is sent successfuly  
+    '''
     config = ScriptVars()
     recipients = config.get_or_create_recipients()
 
@@ -60,6 +67,10 @@ def send_batch_email(subject=None, body=None, attachments=None):
         return False
 
 def prepare_attachment(att):
+    """
+    Packages the file at the provided path and returns it as an attachment
+    Returns None if the parameter is not a file
+    """
     if not Path(att).is_file:
         return None
     m_type, encoding = mimetypes.guess_type(att)
@@ -83,6 +94,10 @@ def prepare_attachment(att):
     return attachment
 
 def get_or_create_recipients(path, default):
+    '''
+    Attempts to get the recipient list, if it fails to find the file
+    It will create a recipient list, populated with default sender
+    '''
     recipients = []
     try:
         with open(path, 'r') as csv_file:
