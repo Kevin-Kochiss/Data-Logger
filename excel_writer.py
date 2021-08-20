@@ -3,6 +3,13 @@ import xlsxwriter
 from pathlib import Path
 import ntpath
 
+unit_dict = {'Time': '(s)',
+            '%LOAD': '(%)',
+            'degF': '(F)',
+            'RPM' : '(rpm)',
+            'PSI' : '(psi)',
+}
+
 def write_to_xlsx(csv_path, dest_path):
     '''Reads the raw csv and converts it to an excel file, saving it to
     the destination provided.
@@ -12,10 +19,19 @@ def write_to_xlsx(csv_path, dest_path):
     xlsx_name = csv_to_xlsx(csv_path)
     xlsx_file = Path(dest_path, xlsx_name)
     df_raw = pd.read_csv(csv_path, skiprows=25, usecols=[1,3,4,5,6,7,8])
+    df_raw.dropna(inplace = True)
     date = df_raw.iloc[0]['Time'].split()
     date = date[0]
     df_raw['Time'] = df_raw['Time'].apply(func=convert_date_time)
+    headers = list(df_raw.columns)
+
+    for index, column in enumerate(df_raw):
+        if column == 'Time':
+            continue
+        entries = len(df_raw[column])
+
     df_graphs = pd.DataFrame()
+   
     try:
         with pd.ExcelWriter(xlsx_file, engine='xlsxwriter') as writer:
 
@@ -23,20 +39,11 @@ def write_to_xlsx(csv_path, dest_path):
             df_raw.to_excel(writer, index=False, sheet_name='Raw Data')
             workbook = writer.book
             worksheet = writer.sheets['Graphs']
-            chart = workbook.add_chart({'type': 'line'})
-            
-            chart.add_series({
-                                'categories': ['Raw Data', 1, 0, 7, 0],
-                                'values':     ['Raw Data', 1, 1, 7, 1],
-                            })
-            chart.set_title({'name':'Test Chart'})
-            chart.set_style(10)
-            chart.set_x_axis({'name': 'Time', 'position_axis': 'on_tick'})
-            chart.set_y_axis({'name': 'Load'})
-            chart.set_legend({'position': 'none'})
-            worksheet.write('A1', "Date:")
-            worksheet.write('B1', str(date))
-            worksheet.insert_chart('A2', chart)
+            for index, column in enumerate(df_raw):
+                if column == 'Time':
+                    continue
+                num_entries = len(df_raw[column])
+                add_chart(workbook=workbook, worksheet=worksheet,column=column, index=index, num_entries=num_entries)
 
     except:
         #TODO: Exception handling
@@ -59,6 +66,27 @@ def csv_to_xlsx(file_path):
     ls.append('xlsx')
     new_name = '.'.join(ls)
     return new_name
+
+def add_chart(workbook, worksheet, num_entries, index, column):      
+    chart = workbook.add_chart({'type': 'line'})
+    chart.add_series({
+                                #     [sheetname, first_row, first_col, last_row, last_col]
+                        'categories': ['Raw Data', 1, 0, num_entries, 0],
+                        'values':     ['Raw Data', 1, index, num_entries, index],
+                        'line': {'width':2}
+                    })
+    chart.set_style(10)
+    chart.set_title({'name':'{} vs Time'.format(column)})
+    chart.set_x_axis({'name': 'Time', 'position_axis': 'on_tick', 'name_font': {'size': 16, 'bold': True}} )
+    chart.set_y_axis({'name': column, 'name_font': {'size': 16, 'bold': True}})
+    chart.set_legend({'position': 'none'})
+    cell = 'A{}'.format(((index-1)*30)+1)
+    worksheet.insert_chart(cell, chart, {'x_scale': 2, 'y_scale': 2})
+
+def write_chart_info(worksheet, date):
+    worksheet.write('A1', "Date:")
+    worksheet.write('B1', str(date))
+
 
 write_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv', r'C:\Users\kevin\Desktop')
 #csv_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv')
