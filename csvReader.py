@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from configuration import ScriptVars
 from email_dispatch import send_batch_email
+from excel_writer import write_to_xlsx
 
 # This module is responsible for scanning through the folder directory
 # and detecting new files, monitoring them until data capture is 
@@ -100,11 +101,12 @@ def monitor_data(file_path):
         #if no change in data_points after two passes, the log is complete break
         if passes_unchanged == 2:
             break
-
-    if send_batch_email(attachments=file_path):
-        update_manifest(file_path)
+    if config.can_email():
+        email_success = send_batch_email(attachments=file_path)
+    xlsx_success = write_to_xlsx(file_path,config.config['DESTINATION'])
+    if email_success or xlsx_success:
+            update_manifest(file_path)
    
-
 def subtract_times(time_1, time_2):
     '''Substracts two times in HH:MM:SS, retruns difference in seconds'''
     from itertools import zip_longest 

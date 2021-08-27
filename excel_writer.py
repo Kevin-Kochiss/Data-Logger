@@ -3,9 +3,9 @@ import xlsxwriter
 from pathlib import Path
 import ntpath
 
-unit_dict = {'Time': '(s)',
+tittle_dict = {'Time': '(s)',
             '%LOAD': '(%)',
-            'degF': '(F)',
+            'degF': 'Melt Temperature',
             'RPM' : '(rpm)',
             'PSI' : '(psi)',
 }
@@ -48,9 +48,8 @@ def write_to_xlsx(csv_path, dest_path):
     except:
         #TODO: Exception handling
         print('Exextption')
-        pass
-    workbook = xlsxwriter.Workbook('chart_line.xlsx')
-    worksheet = workbook.add_worksheet()
+        return False
+    return True
     
 def convert_date_time(cell):
     '''Strips the date from date time'''
@@ -67,7 +66,13 @@ def csv_to_xlsx(file_path):
     new_name = '.'.join(ls)
     return new_name
 
-def add_chart(workbook, worksheet, num_entries, index, column):      
+def add_chart(workbook, worksheet, num_entries, index, column):
+    '''
+    Function to add a chart to a worksheet given
+    num_entries == length of the data set
+    index == The index of the data set
+    column == the header of the data set
+    '''      
     chart = workbook.add_chart({'type': 'line'})
     chart.add_series({
                                 #     [sheetname, first_row, first_col, last_row, last_col]
@@ -87,6 +92,6 @@ def write_chart_info(worksheet, date):
     worksheet.write('A1', "Date:")
     worksheet.write('B1', str(date))
 
+#Test line
+#write_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv', r'C:\Users\kevin\Desktop')
 
-write_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv', r'C:\Users\kevin\Desktop')
-#csv_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv')
