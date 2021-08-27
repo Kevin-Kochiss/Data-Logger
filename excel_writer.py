@@ -3,13 +3,6 @@ import xlsxwriter
 from pathlib import Path
 import ntpath
 
-tittle_dict = {'Time': '(s)',
-            '%LOAD': '(%)',
-            'degF': 'Melt Temperature',
-            'RPM' : '(rpm)',
-            'PSI' : '(psi)',
-}
-
 def write_to_xlsx(csv_path, dest_path):
     '''Reads the raw csv and converts it to an excel file, saving it to
     the destination provided.
@@ -25,10 +18,10 @@ def write_to_xlsx(csv_path, dest_path):
     df_raw['Time'] = df_raw['Time'].apply(func=convert_date_time)
     headers = list(df_raw.columns)
 
-    for index, column in enumerate(df_raw):
-        if column == 'Time':
-            continue
-        entries = len(df_raw[column])
+    # for index, column in enumerate(df_raw):
+    #     if column == 'Time':
+    #         continue
+    #     entries = len(df_raw[column])
 
     df_graphs = pd.DataFrame()
    
@@ -84,7 +77,7 @@ def add_chart(workbook, worksheet, num_entries, index, column):
                         'line': {'width':2}
                     })
     chart.set_style(10)
-    chart.set_title({'name':'{} vs Time'.format(column)})
+    chart.set_title({'name':'{} vs Time'.format(to_title(column))})
     chart.set_x_axis({'name': 'Time', 'position_axis': 'on_tick', 'name_font': {'size': 16, 'bold': True}} )
     chart.set_y_axis({'name': column, 'name_font': {'size': 16, 'bold': True}})
     chart.set_legend({'position': 'none'})
@@ -113,7 +106,7 @@ def add_multi_chart(workbook, worksheet, num_entries, columns, data_frame, chart
     pairs = [[x,y] for x, y in enumerate(data_frame) if y in columns]
     for index, column in pairs:    
         chart.add_series({
-                        'name': column,
+                        'name': to_title(column),
                                 #     [sheetname, first_row, first_col, last_row, last_col]
                         'categories': ['Raw Data', 1, 0, num_entries, 0],
                         'values':     ['Raw Data', 1, index, num_entries, index],
@@ -132,11 +125,20 @@ def write_chart_info(worksheet, date):
     worksheet.write('B1', str(date))
 
 def to_title(column):
+    tittle_dict = {
+        'Time': 'Time',
+        '%LOAD': '% Load',
+        'degF': 'Melt Temperature',
+        'RPM' : 'RPM',
+        'PSI' : 'PSI',
+        'degF.1':'degF.1',
+        'degF.2':'degF.2',
+    }
     try:
         return tittle_dict[column]
     except:
         return 'InValid'
-        
+
 #Test line
 write_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv', r'C:\Users\kevin\Desktop')
 
