@@ -1,7 +1,9 @@
+import os
 import pandas as pd
 import xlsxwriter
 from pathlib import Path
 import ntpath
+from configuration import ScriptVars
 
 def write_to_xlsx(csv_path, dest_path):
     '''Reads the raw csv and converts it to an excel file, saving it to
@@ -11,18 +13,22 @@ def write_to_xlsx(csv_path, dest_path):
     '''
     xlsx_name = csv_to_xlsx(csv_path)
     xlsx_file = Path(dest_path, xlsx_name)
-    df_raw = pd.read_csv(csv_path, skiprows=25, usecols=[1,3,4,5,6,7,8])
+    xlsx_file = check_file_name(xlsx_file)
+    config = ScriptVars()      
+    df_raw = pd.read_csv(
+        csv_path, 
+        skiprows=config.config['HEADER_ROW'] - 1, 
+        usecols=config.config['COLUMNS']
+        )
     df_raw.dropna(inplace = True)
-    date = df_raw.iloc[0]['Time'].split()
+    try:
+        date = df_raw.iloc[0]['Time'].split()
+    except:
+        config.write_error('Time column was not found in the provided csv.  Check HEADER_ROW and COLUMNS', True)
+        return False
     date = date[0]
     df_raw['Time'] = df_raw['Time'].apply(func=convert_date_time)
     headers = list(df_raw.columns)
-
-    # for index, column in enumerate(df_raw):
-    #     if column == 'Time':
-    #         continue
-    #     entries = len(df_raw[column])
-
     df_graphs = pd.DataFrame()
    
     try:
@@ -32,18 +38,32 @@ def write_to_xlsx(csv_path, dest_path):
             df_raw.to_excel(writer, index=False, sheet_name='Raw Data')
             workbook = writer.book
             worksheet = writer.sheets['Graphs']
+            worksheet.write(0,0,'Line 7')
+            worksheet.write(1,0, xlsx_name.split('.')[0])
+            worksheet.write(2,0, 'Date(Y-M-D): {}'.format(date))
+            offset = 4
+            chart_num = 0
             for index, column in enumerate(df_raw):
                 if column == 'Time' or column == 'degF.1' or column == 'degF.2':
                     continue
                 num_entries = len(df_raw[column])                    
-                add_chart(workbook=workbook, worksheet=worksheet,column=column, index=index, num_entries=num_entries)
+                chart = make_chart(workbook=workbook, worksheet=worksheet,column=column, index=index, num_entries=num_entries)
+                cell = 'A{}'.format(((index-1)*30)+offset)
+                worksheet.insert_chart(cell, chart, {'x_scale': 2, 'y_scale': 2})
+                chart_num += 1
+            #determine a way to make this programtically, could use single columns, mulichart in settings
             cols = ['degF.1', 'degF.2']
             pairs = [[x,y] for x, y in enumerate(df_raw) if y in cols]
-            add_multi_chart(workbook=workbook, worksheet=worksheet, columns=['degF.1', 'degF.2'], data_frame=df_raw, num_entries=num_entries, chart_title='Temperature vs Time', y_axis='Temperature (F)')
+            mulit_chart  = make_multi_chart(workbook=workbook, 
+                worksheet=worksheet, columns=['degF.1', 'degF.2'], 
+                data_frame=df_raw, num_entries=num_entries, chart_title='Temperature vs Time', 
+                y_axis='Temperature (F)'
+                )
+            cell = 'A{}'.format((chart_num*30)+offset)
+            worksheet.insert_chart(cell, mulit_chart, {'x_scale': 2, 'y_scale': 2})
 
     except:
-        #TODO: Exception handling
-        print('Exextption')
+        ScriptVars().write_error('Error encountered when attempting to write the excell file.  Ensure that the file is not open.')
         return False
     return True
     
@@ -62,7 +82,7 @@ def csv_to_xlsx(file_path):
     new_name = '.'.join(ls)
     return new_name
 
-def add_chart(workbook, worksheet, num_entries, index, column):
+def make_chart(workbook, worksheet, num_entries, index, column):
     '''
     Function to add a chart to a worksheet given
     num_entries == length of the data set
@@ -81,10 +101,9 @@ def add_chart(workbook, worksheet, num_entries, index, column):
     chart.set_x_axis({'name': 'Time', 'position_axis': 'on_tick', 'name_font': {'size': 16, 'bold': True}} )
     chart.set_y_axis({'name': column, 'name_font': {'size': 16, 'bold': True}})
     chart.set_legend({'position': 'none'})
-    cell = 'A{}'.format(((index-1)*30)+1)
-    worksheet.insert_chart(cell, chart, {'x_scale': 2, 'y_scale': 2})
+    return chart
 
-def add_multi_chart(workbook, worksheet, num_entries, columns, data_frame, chart_title, y_axis):
+def make_multi_chart(workbook, worksheet, num_entries, columns, data_frame, chart_title, y_axis):
     """
     Parameters
     ----------
@@ -117,8 +136,7 @@ def add_multi_chart(workbook, worksheet, num_entries, columns, data_frame, chart
     chart.set_x_axis({'name': 'Time', 'position_axis': 'on_tick', 'name_font': {'size': 16, 'bold': True}} )
     chart.set_y_axis({'name': y_axis, 'name_font': {'size': 16, 'bold': True}})
     chart.set_legend({'font': {'size': 9, 'bold': True}})
-    cell = 'A{}'.format(((pairs[0][0]-1)*30)+1)
-    worksheet.insert_chart(cell, chart, {'x_scale': 2, 'y_scale': 2})
+    return chart
 
 def write_chart_info(worksheet, date):
     worksheet.write('A1', "Date:")
@@ -137,8 +155,30 @@ def to_title(column):
     try:
         return tittle_dict[column]
     except:
-        return 'InValid'
+        return column
 
-#Test line
-write_to_xlsx(r'C:\Users\kevin\Downloads\Test Lot#98232.csv', r'C:\Users\kevin\Desktop')
+def check_file_name(file_name):
+    """ Checks if a file with this name already exists in the directoy.
+        Appends a version string if it does, and upadates if a version is already there.
+        Returns the new file name
+    """
+    if Path(file_name).exists():
+        ls = list(os.path.splitext(file_name))
+        if(ls[0].endswith(')')):
+            ls[0] = ls[0].rsplit('(', 1)
+            version = int(''.join(c for c in ls[0][1] if c.isdigit()))
+            version += 1
+            version = '({})'.format(version)
+            ls[0][1] = version
+            ls[0] = ''.join(ls[0])
+        else:
+            ls[0] += '(1)'
+        new_name =  ''.join(ls)
+        next_name = check_file_name(new_name)
+        if new_name == next_name:
+            return new_name
+        else:
+            return check_file_name(next_name)
+    else:
+        return file_name
 

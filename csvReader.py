@@ -101,6 +101,7 @@ def monitor_data(file_path):
         #if no change in data_points after two passes, the log is complete break
         if passes_unchanged == 2:
             break
+    email_success = False
     if config.can_email():
         email_success = send_batch_email(attachments=file_path)
     xlsx_success = write_to_xlsx(file_path,config.config['DESTINATION'])
@@ -155,12 +156,10 @@ def check_date(entry, days_old=7):
     If so it and its compainion files are delted
     Returns True if date is within range, False if file is old
     '''
-    print(entry) #--------
     entry = entry.split('\t')
     dif =  datetime.now() - datetime.strptime(entry[0], '%x')
-    print(dif.days)
+
     if dif.days >= days_old:
-        print('> than')
         base_path = Path(entry[1])
         file_paths = [base_path]
         ccr_path = os.path.splitext(base_path)[0] + '.ccr'
